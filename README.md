@@ -42,17 +42,9 @@ An interactive, educational web-based solar system simulator built with HTML5 Ca
 
 ## 🚀 Live Demo
 
-**[Launch Solar System Simulator](https://umairyusufnurgat-cloud.github.io/solar-system-simulator)**
+**[Launch Solar System Simulator](https://umairyusufnurgat-cloud.github.io/Module-5-Assessment-1)**
 
 > Replace `yourusername` with your actual GitHub username after uploading
-
-## 📸 Screenshots
-
-![Solar System Overview](https://via.placeholder.com/800x400/000000/FFFFFF?text=Solar+System+Overview)
-*Overview of the solar system with orbits visible*
-
-![Planet Detail View](https://via.placeholder.com/800x400/000000/FFFFFF?text=Zoomed+Planet+View)
-*Zoomed view showing planet details and names*
 
 ## 🛠️ Technologies Used
 
@@ -165,4 +157,5 @@ If you encounter any issues or have suggestions:
 ### 🌟 Star this project if you enjoyed exploring the solar system!
 
 **Made with ❤️ and ☕ for space enthusiasts everywhere**
+
 

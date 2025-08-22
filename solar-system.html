@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%);
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+            cursor: grab;
+            background: 
+                radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+            background-color: #000;
+            background-repeat: repeat;
+            background-size: 200px 100px;
+        }
+
+        .clickable-cursor {
+            cursor: pointer !important;
+        }
+
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            z-index: 100;
+            border: 2px solid #0073e6;
+            box-shadow: 0 0 20px rgba(0, 115, 230, 0.3);
+            display: none;
+        }
+
+        .info-panel h3 {
+            margin: 0 0 10px 0;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+        }
+
+        .info-panel p {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .info-panel button {
+            background: #0073e6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .info-panel button:hover {
+            background: #00d4ff;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            z-index: 100;
+            min-width: 200px;
+            border: 2px solid rgba(0, 115, 230, 0.3);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .controls.hidden {
+            transform: translateX(calc(100% + 40px));
+            opacity: 0;
+        }
+
+        .controls-toggle {
+            position: fixed;
+            top: 30px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 2px solid rgba(0, 115, 230, 0.3);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 101;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .controls-toggle:hover {
+            background: #0073e6;
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .controls-toggle.visible {
+            display: flex;
+        }
+
+        .controls h3 {
+            margin: 0 0 15px 0;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .controls button {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            width: calc(50% - 10px);
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .controls button:hover {
+            background: #0073e6;
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .controls button:active {
+            transform: translateY(0px);
+        }
+
+        .controls .button-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .controls .full-width {
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        .controls small {
+            display: block;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .title {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 15px #0073e6,
+                0 0 20px #0073e6,
+                0 0 35px #0073e6,
+                0 0 40px #0073e6;
+            z-index: 100;
+            animation: titleFloat 4s ease-in-out infinite alternate,
+                      titleGlow 2s ease-in-out infinite alternate;
+            font-family: 'Arial Black', Arial, sans-serif;
+            letter-spacing: 2px;
+        }
+
+        @keyframes titleFloat {
+            0% {
+                transform: translateY(0px);
+            }
+            100% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes titleGlow {
+            0% {
+                text-shadow: 
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 15px #0073e6,
+                    0 0 20px #0073e6,
+                    0 0 35px #0073e6,
+                    0 0 40px #0073e6;
+            }
+            100% {
+                text-shadow: 
+                    0 0 10px #fff,
+                    0 0 20px #fff,
+                    0 0 30px #00d4ff,
+                    0 0 40px #00d4ff,
+                    0 0 70px #00d4ff,
+                    0 0 80px #00d4ff;
+            }
+        }
+
+        .title-stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .subtitle {
+            position: fixed;
+            top: 65px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-style: italic;
+            animation: subtitleFade 3s ease-in-out infinite alternate;
+            z-index: 100;
+        }
+
+        @keyframes subtitleFade {
+            0% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Solar System Simulator
+        <div class="title-stars">
+            <div class="star" style="top: 5px; left: 50px; animation-delay: 0s;"></div>
+            <div class="star" style="top: 15px; left: 200px; animation-delay: 0.5s;"></div>
+            <div class="star" style="top: 25px; left: 350px; animation-delay: 1s;"></div>
+            <div class="star" style="top: 8px; left: 450px; animation-delay: 1.5s;"></div>
+            <div class="star" style="top: 30px; left: 150px; animation-delay: 2s;"></div>
+        </div>
+    </div>
+    <div class="subtitle">⭐ Explore the cosmos in real-time ⭐</div>
+    
+    <div class="controls" id="controlsPanel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">🎮 Controls</h3>
+            <button onclick="hideControls()" style="background: #555; padding: 5px 8px; font-size: 12px; margin: 0; width: auto;">🙈 Hide</button>
+        </div>
+        
+        <div class="button-row">
+            <button onclick="togglePause()" class="full-width">⏯️ Pause/Play</button>
+        </div>
+        
+        <div class="button-row">
+            <button onclick="changeSpeed(-0.5)">🐌 Slower</button>
+            <button onclick="changeSpeed(0.5)">🚀 Faster</button>
+        </div>
+        
+        <div class="button-row">
+            <button onclick="resetView()">🎯 Reset View</button>
+            <button onclick="toggleOrbits()">🔄 Toggle Orbits</button>
+        </div>
+        
+        <small>
+            <strong>💡 Tips:</strong><br>
+            🖱️ Drag to pan around<br>
+            🖱️ Mouse wheel to zoom in/out<br>
+            🪐 Click planets for educational videos<br><br>
+            
+            <strong>🎯 Pro Tips:</strong><br>
+            🔍 Zoom in to see planet names<br>
+            🐌 Slow down for easier clicking<br>
+            ⏸️ Pause to explore in detail<br>
+            🔄 Toggle orbits for cleaner view
+        </small>
+    </div>
+
+    <div class="controls-toggle" id="controlsToggle" onclick="showControls()">
+        🎮
+    </div>
+
+    <canvas id="solarSystem"></canvas>
+
+    <div id="infoPanel" class="info-panel">
+        <h3 id="planetName">Planet Name</h3>
+        <p id="planetDescription">Planet description will appear here.</p>
+        <button id="watchVideo" onclick="openVideo()">🎥 Watch Educational Video</button>
+        <button onclick="closeInfoPanel()" style="margin-left: 10px; background: #333;">Close</button>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('solarSystem');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Solar system properties
+        let isPaused = false;
+        let animationSpeed = 1;
+        let showOrbits = true;
+        let time = 0;
+        
+        // Camera properties for panning and zooming
+        let camera = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            zoom: 1,
+            minZoom: 0.1,
+            maxZoom: 3
+        };
+
+        // Mouse interaction
+        let mouse = {
+            x: 0,
+            y: 0,
+            down: false,
+            lastX: 0,
+            lastY: 0
+        };
+
+        // Animated starfield background
+        const stars = [];
+        const numStars = 200; // Number of background stars
+        
+        // Initialize stars with random positions and properties
+        function initStars() {
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width * 3, // Spread over larger area
+                    y: Math.random() * canvas.height * 3,
+                    z: Math.random() * 1000, // Depth for parallax effect
+                    originalX: 0,
+                    originalY: 0,
+                    size: Math.random() * 2 + 0.5,
+                    twinkleSpeed: Math.random() * 0.05 + 0.01,
+                    twinklePhase: Math.random() * Math.PI * 2,
+                    brightness: Math.random() * 0.8 + 0.2
+                });
+                // Store original positions for parallax calculation
+                stars[i].originalX = stars[i].x;
+                stars[i].originalY = stars[i].y;
+            }
+        }
+        
+        // Draw animated stars with parallax effect
+        function drawStars() {
+            ctx.save();
+            
+            stars.forEach(star => {
+                // Calculate parallax offset based on camera position and star depth
+                const parallaxX = (camera.x - canvas.width / 2) * (star.z / 1000) * 0.1;
+                const parallaxY = (camera.y - canvas.height / 2) * (star.z / 1000) * 0.1;
+                
+                // Apply parallax effect
+                const screenX = star.originalX - parallaxX;
+                const screenY = star.originalY - parallaxY;
+                
+                // Wrap stars around screen edges
+                const wrappedX = ((screenX % (canvas.width * 1.5)) + (canvas.width * 1.5)) % (canvas.width * 1.5) - canvas.width * 0.25;
+                const wrappedY = ((screenY % (canvas.height * 1.5)) + (canvas.height * 1.5)) % (canvas.height * 1.5) - canvas.height * 0.25;
+                
+                // Skip stars that are too far off screen
+                if (wrappedX < -50 || wrappedX > canvas.width + 50 || 
+                    wrappedY < -50 || wrappedY > canvas.height + 50) {
+                    return;
+                }
+                
+                // Calculate twinkling effect
+                star.twinklePhase += star.twinkleSpeed;
+                const twinkle = Math.sin(star.twinklePhase) * 0.3 + 0.7;
+                const alpha = star.brightness * twinkle;
+                
+                // Different star colors for variety
+                const colors = ['#ffffff', '#ffffcc', '#ccccff', '#ffcccc', '#ccffcc'];
+                const colorIndex = Math.floor((star.originalX + star.originalY) / 100) % colors.length;
+                
+                // Draw star with glow effect
+                ctx.globalAlpha = alpha * 0.8;
+                ctx.fillStyle = colors[colorIndex];
+                
+                // Main star
+                ctx.beginPath();
+                ctx.arc(wrappedX, wrappedY, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add subtle glow for brighter stars
+                if (star.brightness > 0.6) {
+                    ctx.globalAlpha = alpha * 0.3;
+                    ctx.beginPath();
+                    ctx.arc(wrappedX, wrappedY, star.size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+        
+        // Animate stars - slow drift effect
+        function animateStars() {
+            if (!isPaused) {
+                stars.forEach(star => {
+                    // Slow drift movement
+                    star.originalX += star.z / 1000 * 0.2;
+                    star.originalY += star.z / 1000 * 0.1;
+                    
+                    // Wrap around when stars go off screen
+                    if (star.originalX > canvas.width * 3) {
+                        star.originalX = -canvas.width * 0.5;
+                    }
+                    if (star.originalY > canvas.height * 3) {
+                        star.originalY = -canvas.height * 0.5;
+                    }
+                });
+            }
+        }
+
+        // Planet data (distances are scaled down for visibility)
+        const planets = [
+            {
+                name: 'Sun',
+                radius: 25,
+                distance: 0,
+                speed: 0,
+                color: '#FDB813',
+                glowColor: '#FF8C00',
+                angle: 0,
+                rotationSpeed: 0.01,
+                videoUrl: 'https://www.youtube.com/watch?v=6tmbeLTHC_0',
+                description: 'Learn about our Sun - the star at the center of our solar system!'
+            },
+            {
+                name: 'Mercury',
+                radius: 4,
+                distance: 80,
+                speed: 0.04,
+                color: '#8C7853',
+                glowColor: '#A0896B',
+                angle: 0,
+                rotationSpeed: 0.02,
+                videoUrl: 'https://www.youtube.com/watch?v=0KBjnNuhRHs',
+                description: 'Discover Mercury - the smallest and fastest planet!'
+            },
+            {
+                name: 'Venus',
+                radius: 6,
+                distance: 110,
+                speed: 0.035,
+                color: '#FFC649',
+                glowColor: '#FFD700',
+                angle: 0,
+                rotationSpeed: -0.015,
+                videoUrl: 'https://www.youtube.com/watch?v=BvXa1n9fjow',
+                description: 'Explore Venus - the hottest planet in our solar system!'
+            },
+            {
+                name: 'Earth',
+                radius: 7,
+                distance: 150,
+                speed: 0.03,
+                color: '#6B93D6',
+                glowColor: '#87CEEB',
+                angle: 0,
+                rotationSpeed: 0.02,
+                hasRings: false,
+                videoUrl: 'https://www.youtube.com/watch?v=HCDVN7DCzYE',
+                description: 'Learn about Earth - our beautiful blue home planet!'
+            },
+            {
+                name: 'Mars',
+                radius: 5,
+                distance: 200,
+                speed: 0.024,
+                color: '#CD5C5C',
+                glowColor: '#FF6347',
+                angle: 0,
+                rotationSpeed: 0.018,
+                videoUrl: 'https://www.youtube.com/watch?v=D8pnmwOXhoY',
+                description: 'Discover Mars - the red planet that might host life!'
+            },
+            {
+                name: 'Jupiter',
+                radius: 18,
+                distance: 280,
+                speed: 0.013,
+                color: '#D8CA9D',
+                glowColor: '#F4E4BC',
+                angle: 0,
+                rotationSpeed: 0.03,
+                videoUrl: 'https://www.youtube.com/watch?v=PtkqwslbLY8',
+                description: 'Explore Jupiter - the largest planet with the Great Red Spot!'
+            },
+            {
+                name: 'Saturn',
+                radius: 16,
+                distance: 350,
+                speed: 0.009,
+                color: '#FAD5A5',
+                glowColor: '#FFEBB5',
+                angle: 0,
+                rotationSpeed: 0.025,
+                hasRings: true,
+                videoUrl: 'https://www.youtube.com/watch?v=epZdZaEQhS0',
+                description: 'Learn about Saturn - the beautiful ringed planet!'
+            },
+            {
+                name: 'Uranus',
+                radius: 12,
+                distance: 420,
+                speed: 0.006,
+                color: '#4FD0E7',
+                glowColor: '#87CEEB',
+                angle: 0,
+                rotationSpeed: 0.015,
+                videoUrl: 'https://www.youtube.com/watch?v=m4NXbFOiOGk',
+                description: 'Discover Uranus - the tilted ice giant!'
+            },
+            {
+                name: 'Neptune',
+                radius: 11,
+                distance: 480,
+                speed: 0.005,
+                color: '#4B70DD',
+                glowColor: '#6495ED',
+                angle: 0,
+                rotationSpeed: 0.012,
+                videoUrl: 'https://www.youtube.com/watch?v=NStn7zZKXfE',
+                description: 'Explore Neptune - the windiest planet in our solar system!'
+            }
+        ];
+
+        // Draw a planet with glow effect
+        function drawPlanet(planet) {
+            const x = planet.distance * Math.cos(planet.angle);
+            const y = planet.distance * Math.sin(planet.angle);
+            
+            // Transform coordinates based on camera
+            const screenX = (x * camera.zoom) + camera.x;
+            const screenY = (y * camera.zoom) + camera.y;
+            const scaledRadius = planet.radius * camera.zoom;
+            
+            // Skip drawing if planet is way off screen
+            if (screenX < -scaledRadius || screenX > canvas.width + scaledRadius ||
+                screenY < -scaledRadius || screenY > canvas.height + scaledRadius) {
+                return;
+            }
+            
+            ctx.save();
+            
+            // Draw glow effect
+            if (planet.name === 'Sun') {
+                const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, scaledRadius * 3);
+                gradient.addColorStop(0, planet.glowColor + '80');
+                gradient.addColorStop(0.5, planet.glowColor + '40');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(screenX - scaledRadius * 3, screenY - scaledRadius * 3, 
+                           scaledRadius * 6, scaledRadius * 6);
+            }
+            
+            // Draw planet
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, scaledRadius, 0, Math.PI * 2);
+            ctx.fillStyle = planet.color;
+            ctx.fill();
+            
+            // Add subtle glow for other planets
+            if (planet.name !== 'Sun') {
+                ctx.shadowColor = planet.glowColor;
+                ctx.shadowBlur = scaledRadius * 0.5;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw Saturn's rings
+            if (planet.hasRings && scaledRadius > 2) {
+                ctx.strokeStyle = '#DDBF94';
+                ctx.lineWidth = Math.max(1, scaledRadius * 0.1);
+                ctx.beginPath();
+                ctx.ellipse(screenX, screenY, scaledRadius * 1.8, scaledRadius * 0.4, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.strokeStyle = '#C4A484';
+                ctx.lineWidth = Math.max(1, scaledRadius * 0.05);
+                ctx.beginPath();
+                ctx.ellipse(screenX, screenY, scaledRadius * 2.2, scaledRadius * 0.5, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Draw planet name if zoomed in enough
+            if (scaledRadius > 8 && planet.name !== 'Sun') {
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(planet.name, screenX, screenY + scaledRadius + 15);
+            }
+            
+            ctx.restore();
+        }
+
+        // Draw orbital path
+        function drawOrbit(planet) {
+            if (planet.distance === 0) return; // Don't draw orbit for Sun
+            
+            const scaledDistance = planet.distance * camera.zoom;
+            
+            ctx.save();
+            ctx.translate(camera.x, camera.y);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(0, 0, scaledDistance, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Main animation loop
+        function animate() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!isPaused) {
+                time += 0.016 * animationSpeed; // ~60fps
+                
+                // Update planet positions
+                planets.forEach(planet => {
+                    planet.angle += planet.speed * animationSpeed;
+                    planet.rotationAngle = (planet.rotationAngle || 0) + planet.rotationSpeed * animationSpeed;
+                });
+            }
+            
+            // Draw orbits
+            if (showOrbits) {
+                planets.forEach(drawOrbit);
+            }
+            
+            // Draw planets (Sun first, then others)
+            const sun = planets[0];
+            drawPlanet(sun);
+            
+            for (let i = 1; i < planets.length; i++) {
+                drawPlanet(planets[i]);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Control functions
+        function togglePause() {
+            isPaused = !isPaused;
+        }
+
+        function changeSpeed(delta) {
+            animationSpeed = Math.max(0.1, Math.min(5, animationSpeed + delta));
+        }
+
+        function resetView() {
+            camera.x = canvas.width / 2;
+            camera.y = canvas.height / 2;
+            camera.zoom = 1;
+        }
+
+        function toggleOrbits() {
+            showOrbits = !showOrbits;
+        }
+
+        // Mouse event handlers
+        canvas.addEventListener('mousedown', (e) => {
+            mouse.down = true;
+            mouse.lastX = e.clientX;
+            mouse.lastY = e.clientY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (mouse.down) {
+                const deltaX = e.clientX - mouse.lastX;
+                const deltaY = e.clientY - mouse.lastY;
+                
+                camera.x += deltaX;
+                camera.y += deltaY;
+                
+                mouse.lastX = e.clientX;
+                mouse.lastY = e.clientY;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            mouse.down = false;
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            const newZoom = camera.zoom * zoomFactor;
+            
+            if (newZoom >= camera.minZoom && newZoom <= camera.maxZoom) {
+                // Zoom towards mouse position
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                
+                camera.x = mouseX - (mouseX - camera.x) * zoomFactor;
+                camera.y = mouseY - (mouseY - camera.y) * zoomFactor;
+                camera.zoom = newZoom;
+            }
+        });
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                mouse.down = true;
+                mouse.lastX = e.touches[0].clientX;
+                mouse.lastY = e.touches[0].clientY;
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (mouse.down && e.touches.length === 1) {
+                const deltaX = e.touches[0].clientX - mouse.lastX;
+                const deltaY = e.touches[0].clientY - mouse.lastY;
+                
+                camera.x += deltaX;
+                camera.y += deltaY;
+                
+                mouse.lastX = e.touches[0].clientX;
+                mouse.lastY = e.touches[0].clientY;
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            mouse.down = false;
+        });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'KeyO':
+                    toggleOrbits();
+                    break;
+                case 'KeyR':
+                    resetView();
+                    break;
+                case 'ArrowUp':
+                case 'Equal':
+                    changeSpeed(0.2);
+                    break;
+                case 'ArrowDown':
+                case 'Minus':
+                    changeSpeed(-0.2);
+                    break;
+            }
+        });
+
+        // Planet interaction variables
+        let selectedPlanet = null;
+        let hoveredPlanet = null;
+
+        // Check if mouse is over a planet
+        function getPlanetAtPosition(mouseX, mouseY) {
+            for (const planet of planets) {
+                const x = planet.distance * Math.cos(planet.angle);
+                const y = planet.distance * Math.sin(planet.angle);
+                
+                const screenX = (x * camera.zoom) + camera.x;
+                const screenY = (y * camera.zoom) + camera.y;
+                const scaledRadius = planet.radius * camera.zoom;
+                
+                const distance = Math.sqrt(
+                    Math.pow(mouseX - screenX, 2) + Math.pow(mouseY - screenY, 2)
+                );
+                
+                if (distance <= scaledRadius) {
+                    return planet;
+                }
+            }
+            return null;
+        }
+
+        // Update cursor based on hover state
+        function updateCursor() {
+            if (hoveredPlanet) {
+                canvas.style.cursor = 'pointer';
+            } else if (mouse.down) {
+                canvas.style.cursor = 'grabbing';
+            } else {
+                canvas.style.cursor = 'grab';
+            }
+        }
+
+        // Show planet info panel
+        function showPlanetInfo(planet) {
+            selectedPlanet = planet;
+            const infoPanel = document.getElementById('infoPanel');
+            const planetName = document.getElementById('planetName');
+            const planetDescription = document.getElementById('planetDescription');
+            
+            planetName.textContent = planet.name;
+            planetDescription.textContent = planet.description;
+            infoPanel.style.display = 'block';
+        }
+
+        // Close info panel
+        function closeInfoPanel() {
+            const infoPanel = document.getElementById('infoPanel');
+            infoPanel.style.display = 'none';
+            selectedPlanet = null;
+        }
+
+        // Open educational video
+        function openVideo() {
+            if (selectedPlanet && selectedPlanet.videoUrl) {
+                window.open(selectedPlanet.videoUrl, '_blank');
+            }
+        }
+
+        // Enhanced mouse move handler with hover detection
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Check for planet hover
+            const planet = getPlanetAtPosition(mouseX, mouseY);
+            hoveredPlanet = planet;
+            updateCursor();
+            
+            // Handle panning
+            if (mouse.down && !hoveredPlanet) {
+                const deltaX = e.clientX - mouse.lastX;
+                const deltaY = e.clientY - mouse.lastY;
+                
+                camera.x += deltaX;
+                camera.y += deltaY;
+                
+                mouse.lastX = e.clientX;
+                mouse.lastY = e.clientY;
+            }
+        });
+
+        // Enhanced click handler
+        canvas.addEventListener('click', (e) => {
+            if (!mouse.down) { // Only trigger on actual clicks, not drags
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const planet = getPlanetAtPosition(mouseX, mouseY);
+                if (planet) {
+                    showPlanetInfo(planet);
+                }
+            }
+        });
+
+        // Update the original mousemove handler to not interfere
+        const originalMouseMoveHandler = canvas.onmousemove;
+        canvas.onmousemove = null; // Remove the original handler since we replaced it above
+
+        // Add visual feedback for clickable planets in the drawing function
+        function drawPlanetWithHover(planet) {
+            const x = planet.distance * Math.cos(planet.angle);
+            const y = planet.distance * Math.sin(planet.angle);
+            
+            // Transform coordinates based on camera
+            const screenX = (x * camera.zoom) + camera.x;
+            const screenY = (y * camera.zoom) + camera.y;
+            const scaledRadius = planet.radius * camera.zoom;
+            
+            // Skip drawing if planet is way off screen
+            if (screenX < -scaledRadius || screenX > canvas.width + scaledRadius ||
+                screenY < -scaledRadius || screenY > canvas.height + scaledRadius) {
+                return;
+            }
+            
+            ctx.save();
+            
+            // Add hover effect
+            if (hoveredPlanet === planet) {
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, scaledRadius + 3, 0, Math.PI * 2);
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Add pulsing glow effect
+                ctx.shadowColor = '#00d4ff';
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = 'rgba(0, 212, 255, 0.5)';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw glow effect
+            if (planet.name === 'Sun') {
+                const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, scaledRadius * 3);
+                gradient.addColorStop(0, planet.glowColor + '80');
+                gradient.addColorStop(0.5, planet.glowColor + '40');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(screenX - scaledRadius * 3, screenY - scaledRadius * 3, 
+                           scaledRadius * 6, scaledRadius * 6);
+            }
+            
+            // Draw planet
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, scaledRadius, 0, Math.PI * 2);
+            ctx.fillStyle = planet.color;
+            ctx.fill();
+            
+            // Add subtle glow for other planets
+            if (planet.name !== 'Sun') {
+                ctx.shadowColor = planet.glowColor;
+                ctx.shadowBlur = scaledRadius * 0.5;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw Saturn's rings
+            if (planet.hasRings && scaledRadius > 2) {
+                ctx.strokeStyle = '#DDBF94';
+                ctx.lineWidth = Math.max(1, scaledRadius * 0.1);
+                ctx.beginPath();
+                ctx.ellipse(screenX, screenY, scaledRadius * 1.8, scaledRadius * 0.4, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.strokeStyle = '#C4A484';
+                ctx.lineWidth = Math.max(1, scaledRadius * 0.05);
+                ctx.beginPath();
+                ctx.ellipse(screenX, screenY, scaledRadius * 2.2, scaledRadius * 0.5, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Draw planet name if zoomed in enough
+            if (scaledRadius > 8 && planet.name !== 'Sun') {
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(planet.name, screenX, screenY + scaledRadius + 15);
+            }
+            
+            // Show clickable hint for hovered planets
+            if (hoveredPlanet === planet && scaledRadius > 5) {
+                ctx.fillStyle = '#00d4ff';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('📺 Click for info!', screenX, screenY - scaledRadius - 10);
+            }
+            
+            ctx.restore();
+        }
+
+        // Update the animate function to use the new drawing function
+        function animate() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Animate and draw stars first (background layer)
+            animateStars();
+            drawStars();
+            
+            if (!isPaused) {
+                time += 0.016 * animationSpeed; // ~60fps
+                
+                // Update planet positions
+                planets.forEach(planet => {
+                    planet.angle += planet.speed * animationSpeed;
+                    planet.rotationAngle = (planet.rotationAngle || 0) + planet.rotationSpeed * animationSpeed;
+                });
+            }
+            
+            // Draw orbits
+            if (showOrbits) {
+                planets.forEach(drawOrbit);
+            }
+            
+            // Draw planets with hover effects (Sun first, then others)
+            const sun = planets[0];
+            drawPlanetWithHover(sun);
+            
+            for (let i = 1; i < planets.length; i++) {
+                drawPlanetWithHover(planets[i]);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Controls hide/show functionality
+        function hideControls() {
+            const controlsPanel = document.getElementById('controlsPanel');
+            const controlsToggle = document.getElementById('controlsToggle');
+            
+            controlsPanel.classList.add('hidden');
+            controlsToggle.classList.add('visible');
+        }
+
+        function showControls() {
+            const controlsPanel = document.getElementById('controlsPanel');
+            const controlsToggle = document.getElementById('controlsToggle');
+            
+            controlsPanel.classList.remove('hidden');
+            controlsToggle.classList.remove('visible');
+        }
+
+        // Keyboard shortcut to toggle controls (H key)
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'KeyO':
+                    toggleOrbits();
+                    break;
+                case 'KeyR':
+                    resetView();
+                    break;
+                case 'KeyH':
+                    e.preventDefault();
+                    const controlsPanel = document.getElementById('controlsPanel');
+                    if (controlsPanel.classList.contains('hidden')) {
+                        showControls();
+                    } else {
+                        hideControls();
+                    }
+                    break;
+                case 'ArrowUp':
+                case 'Equal':
+                    changeSpeed(0.2);
+                    break;
+                case 'ArrowDown':
+                case 'Minus':
+                    changeSpeed(-0.2);
+                    break;
+            }
+        });
+
+        // Initialize starfield and start animation
+        initStars();
+        animate();
+    </script>
+</body>
+</html>

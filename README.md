@@ -44,8 +44,6 @@ An interactive, educational web-based solar system simulator built with HTML5 Ca
 
 **[Launch Solar System Simulator](https://umairyusufnurgat-cloud.github.io/Module-5-Assessment-1)**
 
-> Replace `yourusername` with your actual GitHub username after uploading
-
 ## 🛠️ Technologies Used
 
 - **HTML5 Canvas** - For rendering graphics and animations
@@ -157,5 +155,6 @@ If you encounter any issues or have suggestions:
 ### 🌟 Star this project if you enjoyed exploring the solar system!
 
 **Made with ❤️ and ☕ for space enthusiasts everywhere**
+
 
 
